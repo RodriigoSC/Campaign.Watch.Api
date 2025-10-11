@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DTM_Vault.Data" Version="1.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Campaign.Watch.Application\Campaign.Watch.Application.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Domain\Campaign.Watch.Domain.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.Campaign\Campaign.Watch.Infra.Campaign.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.Data\Campaign.Watch.Infra.Data.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.Effmail\Campaign.Watch.Infra.Effmail.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.Effpush\Campaign.Watch.Infra.Effpush.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.Effsms\Campaign.Watch.Infra.Effsms.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.Effwhatsapp\Campaign.Watch.Infra.Effwhatsapp.csproj" />
+  </ItemGroup>
+
+</Project>

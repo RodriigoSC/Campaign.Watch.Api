@@ -1,0 +1,27 @@
+﻿{
+  "profiles": {
+    "Campaign.Watch.Worker.Channels": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CONN_STRING_VAULT": "http://192.168.0.3:8200",
+        "USER_VAULT": "monitoring-dev",
+        "PASS_VAULT": "monitoring-dev"
+      },
+      "WorkerSettings": {
+        "Enabled": true,
+        "ExecutionIntervalMinutes": 1,
+        "MaxRetryAttempts": 3,
+        "RetryDelaySeconds": 30,
+        "HealthCheckIntervalMinutes": 15
+      },
+      "MonitoringSettings": {
+        "CampaignBatchSize": 50,
+        "MaxConcurrentClients": 3,
+        "DelayedExecutionThresholdMinutes": 15,
+        "EnableDetailedLogging": false
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+stages:
+  - trigger-dev
+  - trigger-stag
+  - trigger-master
+
+trigger-dev:
+  stage: trigger-dev
+  only:
+  - develop
+  trigger:
+    include: pipelines/.gitlab-ci.develop.yml
+    
+trigger-stag:
+  stage: trigger-stag
+  only:
+  - staging
+  trigger:
+    include: pipelines/.gitlab-ci.staging.yml
+    
+trigger-master:
+  stage: trigger-master
+  only:
+  - master
+  trigger:
+    include: pipelines/.gitlab-ci.master.yml

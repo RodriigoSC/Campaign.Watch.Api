@@ -1,0 +1,55 @@
+name: CI - API & Worker
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Baixar código
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Configurar .NET (ajuste se usar 6.0 ou 8.0)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '5.0.x'
+
+      # 3. Restaurar dependências
+      - name: Restore dependencies
+        run: dotnet restore CampaignWatch.sln
+
+      # 4. Build de toda a solution
+      - name: Build solution
+        run: dotnet build CampaignWatch.sln --configuration Release --no-restore
+
+      # 5. Rodar testes
+      - name: Run tests
+        run: dotnet test tests/Campaign.Watch.Test/Campaign.Watch.Test.csproj --no-build --verbosity normal
+
+      # 6. Publicar API
+      - name: Publish API
+        run: dotnet publish src/Campaign.Watch.Api/Campaign.Watch.Api.csproj -c Release -o ./publish/api
+
+      # 7. Publicar Worker
+      - name: Publish Worker Channels
+        run: dotnet publish src/Campaign.Watch.Worker.Channels/Campaign.Watch.Worker.Channels.csproj -c Release -o ./publish/worker-channels
+
+      # 8. Upload artefatos (opcional, útil para outro job de deploy)
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-publish
+          path: ./publish/api
+
+      - name: Upload Worker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-channels-publish
+          path: ./publish/worker-channels

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>9558ab0b-8f2c-46a3-963c-99a4ae992d25</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Middlewares\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Campaign.Watch.Application\Campaign.Watch.Application.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Domain\Campaign.Watch.Domain.csproj" />
+    <ProjectReference Include="..\Campaign.Watch.Infra.IoC\Campaign.Watch.Infra.IoC.csproj" />
+  </ItemGroup>
+
+</Project>
