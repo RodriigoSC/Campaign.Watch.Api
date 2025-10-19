@@ -1,6 +1,5 @@
 ﻿using Campaign.Watch.Application.Dtos.Campaign;
 using Campaign.Watch.Application.Interfaces.Campaign;
-using Campaign.Watch.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
