@@ -1,5 +1,4 @@
 ﻿using Campaign.Watch.Domain.Entities.Campaign;
-using Campaign.Watch.Domain.Enums;
 using MongoDB.Bson;
 using System;
 using System.Collections.Generic;

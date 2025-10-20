@@ -5,6 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\Read\**" />
+    <EmbeddedResource Remove="Services\Read\**" />
+    <None Remove="Services\Read\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
@@ -15,15 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Campaign.Watch.Domain\Campaign.Watch.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Interfaces\Read\Effmail\" />
-    <Folder Include="Interfaces\Read\Effpush\" />
-    <Folder Include="Interfaces\Read\Effsms\" />
-    <Folder Include="Services\Read\Effmail\" />
-    <Folder Include="Services\Read\Effpush\" />
-    <Folder Include="Services\Read\Effsms\" />
   </ItemGroup>
 
 </Project>

@@ -494,15 +494,13 @@ namespace Campaign.Watch.Application.Services.Campaign
             {
                 OverallHealth = execution.HasMonitoringErrors ? "Error" : "Healthy",
                 TotalSteps = steps.Count(),
-                HealthySteps = steps.Count(s => string.IsNullOrEmpty(s.Error) && string.IsNullOrEmpty(s.MonitoringNotes)),
-                StepsWithWarnings = steps.Count(s => !string.IsNullOrEmpty(s.MonitoringNotes) && string.IsNullOrEmpty(s.Error)),
-                StepsWithErrors = steps.Count(s => !string.IsNullOrEmpty(s.Error)),
-                CriticalSteps = 0, // Pode ser expandido com lógica mais complexa
-                MainIssues = steps
-                    .Where(s => !string.IsNullOrEmpty(s.MonitoringNotes) || !string.IsNullOrEmpty(s.Error))
-                    .Select(s => s.MonitoringNotes ?? s.Error)
-                    .Take(5)
-                    .ToList()
+                HealthySteps = steps.Count(s => string.IsNullOrEmpty(s.Error as string) && string.IsNullOrEmpty(s.MonitoringNotes as string)),
+                StepsWithWarnings = steps.Count(s => !string.IsNullOrEmpty(s.MonitoringNotes as string) && string.IsNullOrEmpty(s.Error as string)),
+                StepsWithErrors = steps.Count(s => !string.IsNullOrEmpty(s.Error as string)),
+                CriticalSteps = 0, 
+                MainIssues = steps
+                          .Where(s => !string.IsNullOrEmpty(s.MonitoringNotes as string) || !string.IsNullOrEmpty(s.Error as string))
+                          .Select(s => (s.MonitoringNotes as string) ?? (s.Error as string)) .Take(5) .ToList()
             };
         }
 
