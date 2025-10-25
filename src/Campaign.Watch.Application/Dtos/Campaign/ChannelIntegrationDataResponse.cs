@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Campaign.Watch.Application.Dtos.Campaign
 {
@@ -16,5 +12,22 @@ namespace Campaign.Watch.Application.Dtos.Campaign
         public string TemplateId { get; set; }
         public FileInfoDataResponse File { get; set; }
         public LeadsDataResponse Leads { get; set; }
+    }
+
+    public class FileInfoDataResponse
+    {
+        public string Name { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public DateTime? FinishedAt { get; set; }
+        public long Total { get; set; }
+    }
+
+    public class LeadsDataResponse
+    {
+        public int? Blocked { get; set; }
+        public int? Deduplication { get; set; }
+        public int? Error { get; set; }
+        public int? Optout { get; set; }
+        public int? Success { get; set; }
     }
 }

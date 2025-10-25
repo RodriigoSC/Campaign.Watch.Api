@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Campaign.Watch.Application.Dtos.Campaign
 {
-    /// <summary>
-    /// DTO completo para resposta de campanha monitorada, alinhado com CampaignModel do worker
-    /// </summary>
     public class CampaignMonitoringResponse
     {
         public string Id { get; set; }
@@ -29,13 +22,33 @@ namespace Campaign.Watch.Application.Dtos.Campaign
         public MonitoringHealthStatusDto HealthStatus { get; set; }
         public SchedulerResponse Scheduler { get; set; }
 
-        // Novos campos do worker
+        // Campos do worker que estavam faltando
         public int TotalExecutionsProcessed { get; set; }
         public int ExecutionsWithErrors { get; set; }
         public DateTime? FirstMonitoringAt { get; set; }
         public string MonitoringNotes { get; set; }
 
-        // Métricas calculadas
+        // Métricas calculadas (opcional - pode ser removido se preferir endpoint separado)
         public CampaignMetricsDto Metrics { get; set; }
+    }
+
+    /// <summary>
+    /// DTO para agrupar as flags de saúde e problemas do monitoramento.
+    /// </summary>
+    public class MonitoringHealthStatusDto
+    {
+        public bool IsFullyVerified { get; set; }
+        public bool HasPendingExecution { get; set; }
+        public bool HasIntegrationErrors { get; set; }
+        public string LastExecutionWithIssueId { get; set; }
+        public string LastMessage { get; set; }
+    }
+
+    public class SchedulerResponse
+    {
+        public DateTime StartDateTime { get; set; }
+        public DateTime? EndDateTime { get; set; }
+        public bool IsRecurrent { get; set; }
+        public string Crontab { get; set; }
     }
 }

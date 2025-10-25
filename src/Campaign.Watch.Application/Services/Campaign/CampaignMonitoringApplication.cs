@@ -4,6 +4,7 @@ using Campaign.Watch.Application.Interfaces.Campaign;
 using Campaign.Watch.Domain.Entities.Campaign;
 using Campaign.Watch.Domain.Enums;
 using Campaign.Watch.Domain.Interfaces.Services.Campaign;
+using Campaign.Watch.Domain.Interfaces.Repositories.Campaign;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using System;
@@ -16,12 +17,14 @@ namespace Campaign.Watch.Application.Services.Campaign
     public class CampaignMonitoringApplication : ICampaignMonitoringApplication
     {
         private readonly ICampaignService _campaignService;
+        private readonly IExecutionRepository _executionRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<CampaignMonitoringApplication> _logger;
 
-        public CampaignMonitoringApplication(ICampaignService campaignService,IMapper mapper,ILogger<CampaignMonitoringApplication> logger)
+        public CampaignMonitoringApplication(ICampaignService campaignService, IExecutionRepository executionRepository, IMapper mapper, ILogger<CampaignMonitoringApplication> logger)
         {
             _campaignService = campaignService;
+            _executionRepository = executionRepository;
             _mapper = mapper;
             _logger = logger;
         }
@@ -38,37 +41,24 @@ namespace Campaign.Watch.Application.Services.Campaign
                 return null;
 
             var response = _mapper.Map<CampaignMonitoringResponse>(campaign);
-            response.Metrics = await CalcularMetricasCampanhaAsync(campaign);
+
+            // Buscar execuções da collection separada
+            var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(objectId);
+            response.Metrics = await CalcularMetricasCampanhaAsync(campaign, executions);
 
             return response;
         }
 
-        public async Task<CampaignMonitoringResponse> ObterCampanhaMonitoradaPorIdCampanhaAsync(string clientName, string idCampanha)
-        {
-            var campaign = await _campaignService.ObterCampanhaPorIdCampanhaAsync(clientName, idCampanha);
-            if (campaign == null)
-                return null;
-
-            var response = _mapper.Map<CampaignMonitoringResponse>(campaign);
-            response.Metrics = await CalcularMetricasCampanhaAsync(campaign);
-
-            return response;
-        }
-
-        public async Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasPorClienteAsync(string clientName)
-        {
-            var campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteAsync(clientName);
-            return await MapearCampanhasComMetricasAsync(campaigns);
-        }
-
-        public async Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasAsync(string clientName = null,string monitoringStatus = null,bool? hasErrors = null, DateTime? dataInicio = null,DateTime? dataFim = null,int pagina = 1,int tamanhoPagina = 50)
+        public async Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasAsync(string clientName = null, string monitoringStatus = null,
+            bool? hasErrors = null, DateTime? dataInicio = null, DateTime? dataFim = null, int pagina = 1, int tamanhoPagina = 50)
         {
             IEnumerable<CampaignEntity> campaigns;
 
-            // Aplicar filtros
+            // Aplicar filtros (mantém a lógica existente)
             if (!string.IsNullOrEmpty(clientName) && dataInicio.HasValue && dataFim.HasValue)
             {
-                campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteOuDataAsync(clientName, dataInicio.Value, dataFim.Value);
+                campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteOuDataAsync(
+                    clientName, dataInicio.Value, dataFim.Value);
             }
             else if (!string.IsNullOrEmpty(clientName))
             {
@@ -76,7 +66,8 @@ namespace Campaign.Watch.Application.Services.Campaign
             }
             else if (dataInicio.HasValue && dataFim.HasValue)
             {
-                campaigns = await _campaignService.ObterTodasAsCampanhasPorDataAsync(dataInicio.Value, dataFim.Value);
+                campaigns = await _campaignService.ObterTodasAsCampanhasPorDataAsync(
+                    dataInicio.Value, dataFim.Value);
             }
             else
             {
@@ -84,7 +75,8 @@ namespace Campaign.Watch.Application.Services.Campaign
             }
 
             // Filtrar por status de monitoramento
-            if (!string.IsNullOrEmpty(monitoringStatus) && Enum.TryParse<MonitoringStatus>(monitoringStatus, true, out var status))
+            if (!string.IsNullOrEmpty(monitoringStatus) &&
+                Enum.TryParse<MonitoringStatus>(monitoringStatus, true, out var status))
             {
                 campaigns = campaigns.Where(c => c.MonitoringStatus == status);
             }
@@ -92,7 +84,8 @@ namespace Campaign.Watch.Application.Services.Campaign
             // Filtrar por erros
             if (hasErrors.HasValue)
             {
-                campaigns = campaigns.Where(c => c.HealthStatus?.HasIntegrationErrors == hasErrors.Value);
+                campaigns = campaigns.Where(c =>
+                    c.HealthStatus?.HasIntegrationErrors == hasErrors.Value);
             }
 
             return await MapearCampanhasComMetricasAsync(campaigns);
@@ -100,22 +93,18 @@ namespace Campaign.Watch.Application.Services.Campaign
 
         #endregion
 
-        #region Execuções
+        #region Execuções - ATUALIZADO para usar ExecutionRepository
 
         public async Task<IEnumerable<ExecutionMonitoringResponse>> ObterExecucoesPorCampanhaAsync(string campaignMonitoringId)
         {
             if (!ObjectId.TryParse(campaignMonitoringId, out var objectId))
                 return Enumerable.Empty<ExecutionMonitoringResponse>();
 
-            var campaign = await _campaignService.ObterCampanhaPorIdAsync(objectId);
-            if (campaign?.Executions == null)
-                return Enumerable.Empty<ExecutionMonitoringResponse>();
+            var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(objectId);
 
-            return campaign.Executions.Select(exec =>
+            return executions.Select(exec =>
             {
                 var response = _mapper.Map<ExecutionMonitoringResponse>(exec);
-                response.CampaignMonitoringId = campaign.Id.ToString();
-                response.OriginalCampaignId = campaign.IdCampaign;
                 response.HealthSummary = CalcularResumoSaudeExecucao(exec);
                 return response;
             });
@@ -123,68 +112,27 @@ namespace Campaign.Watch.Application.Services.Campaign
 
         public async Task<ExecutionMonitoringResponse> ObterExecucaoPorIdAsync(string executionId)
         {
-            // Buscar em todas as campanhas (pode ser otimizado com índice)
-            var allCampaigns = await _campaignService.ObterTodasAsCampanhasAsync();
+            var execution = await _executionRepository.ObterExecucaoPorIdAsync(executionId);
 
-            foreach (var campaign in allCampaigns)
-            {
-                var execution = campaign.Executions?.FirstOrDefault(e => e.ExecutionId == executionId);
-                if (execution != null)
-                {
-                    var response = _mapper.Map<ExecutionMonitoringResponse>(execution);
-                    response.CampaignMonitoringId = campaign.Id.ToString();
-                    response.OriginalCampaignId = campaign.IdCampaign;
-                    response.HealthSummary = CalcularResumoSaudeExecucao(execution);
-                    return response;
-                }
-            }
+            if (execution == null)
+                return null;
 
-            return null;
+            var response = _mapper.Map<ExecutionMonitoringResponse>(execution);
+            response.HealthSummary = CalcularResumoSaudeExecucao(execution);
+            return response;
         }
 
-        public async Task<IEnumerable<ExecutionMonitoringResponse>> ObterExecucoesComErrosAsync(string clientName = null,DateTime? dataInicio = null,DateTime? dataFim = null)
+        public async Task<IEnumerable<ExecutionMonitoringResponse>> ObterExecucoesComErrosAsync(string clientName = null, DateTime? dataInicio = null, DateTime? dataFim = null)
         {
-            IEnumerable<CampaignEntity> campaigns;
+            var executions = await _executionRepository.ObterExecucoesComErrosAsync(
+                clientName, dataInicio, dataFim);
 
-            if (!string.IsNullOrEmpty(clientName))
+            return executions.Select(exec =>
             {
-                campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteAsync(clientName);
-            }
-            else
-            {
-                campaigns = await _campaignService.ObterTodasAsCampanhasAsync();
-            }
-
-            var executionsWithErrors = new List<ExecutionMonitoringResponse>();
-
-            foreach (var campaign in campaigns)
-            {
-                if (campaign.Executions == null)
-                    continue;
-
-                var filteredExecutions = campaign.Executions.Where(e => e.HasMonitoringErrors);
-
-                if (dataInicio.HasValue)
-                {
-                    filteredExecutions = filteredExecutions.Where(e => e.StartDate >= dataInicio.Value);
-                }
-
-                if (dataFim.HasValue)
-                {
-                    filteredExecutions = filteredExecutions.Where(e => e.StartDate <= dataFim.Value);
-                }
-
-                foreach (var exec in filteredExecutions)
-                {
-                    var response = _mapper.Map<ExecutionMonitoringResponse>(exec);
-                    response.CampaignMonitoringId = campaign.Id.ToString();
-                    response.OriginalCampaignId = campaign.IdCampaign;
-                    response.HealthSummary = CalcularResumoSaudeExecucao(exec);
-                    executionsWithErrors.Add(response);
-                }
-            }
-
-            return executionsWithErrors;
+                var response = _mapper.Map<ExecutionMonitoringResponse>(exec);
+                response.HealthSummary = CalcularResumoSaudeExecucao(exec);
+                return response;
+            });
         }
 
         #endregion
@@ -221,7 +169,7 @@ namespace Campaign.Watch.Application.Services.Campaign
             return diagnostic;
         }
 
-        public async Task<IEnumerable<DiagnosticIssueDto>> ObterProblemasDetectadosAsync(string severity = null,DateTime? desde = null,int limite = 100)
+        public async Task<IEnumerable<DiagnosticIssueDto>> ObterProblemasDetectadosAsync(string severity = null, DateTime? desde = null, int limite = 100)
         {
             var campaigns = await _campaignService.ObterTodasAsCampanhasAsync();
             var issues = new List<DiagnosticIssueDto>();
@@ -285,7 +233,8 @@ namespace Campaign.Watch.Application.Services.Campaign
             if (campaign == null)
                 return null;
 
-            return await CalcularMetricasCampanhaAsync(campaign);
+            var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(objectId);
+            return await CalcularMetricasCampanhaAsync(campaign, executions);
         }
 
         public async Task<MonitoringDashboardResponse> ObterDadosDashboardAsync(string clientName = null)
@@ -304,6 +253,14 @@ namespace Campaign.Watch.Application.Services.Campaign
             var campaignsList = campaigns.ToList();
             var today = DateTime.UtcNow.Date;
 
+            // Buscar todas as execuções de hoje
+            var allExecutionsToday = new List<ExecutionEntity>();
+            foreach (var campaign in campaignsList)
+            {
+                var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(campaign.Id);
+                allExecutionsToday.AddRange(executions.Where(e => e.StartDate?.Date == today));
+            }
+
             var dashboard = new MonitoringDashboardResponse
             {
                 GeneratedAt = DateTime.UtcNow,
@@ -311,9 +268,10 @@ namespace Campaign.Watch.Application.Services.Campaign
                 {
                     TotalCampaigns = campaignsList.Count,
                     ActiveCampaigns = campaignsList.Count(c => c.IsActive),
-                    CampaignsWithIssues = campaignsList.Count(c => c.HealthStatus?.HasIntegrationErrors == true),
-                    TotalExecutionsToday = campaignsList.Sum(c => c.Executions?.Count(e => e.StartDate.Date == today) ?? 0),
-                    SuccessfulExecutionsToday = campaignsList.Sum(c => c.Executions?.Count(e => e.StartDate.Date == today && !e.HasMonitoringErrors) ?? 0),
+                    CampaignsWithIssues = campaignsList.Count(c =>
+                        c.HealthStatus?.HasIntegrationErrors == true),
+                    TotalExecutionsToday = allExecutionsToday.Count,
+                    SuccessfulExecutionsToday = allExecutionsToday.Count(e => !e.HasMonitoringErrors),
                     OverallHealthScore = CalcularScoreSaudeGeral(campaignsList)
                 },
                 CampaignsByStatus = GerarGruposPorStatus(campaignsList),
@@ -356,9 +314,10 @@ namespace Campaign.Watch.Application.Services.Campaign
 
         #region Estatísticas
 
-        public async Task<IEnumerable<CampaignStatusGroupDto>> ObterContagemPorStatusMonitoramentoAsync(string clientName = null,DateTime? dataInicio = null,DateTime? dataFim = null)
+        public async Task<IEnumerable<CampaignStatusGroupDto>> ObterContagemPorStatusMonitoramentoAsync(string clientName = null, DateTime? dataInicio = null, DateTime? dataFim = null)
         {
-            var counts = await _campaignService.ObterCampanhasPorStatusMonitoramentoAsync(clientName, dataInicio, dataFim);
+            var counts = await _campaignService.ObterCampanhasPorStatusMonitoramentoAsync(
+                clientName, dataInicio, dataFim);
 
             var total = counts.Sum(c => c.Count);
 
@@ -396,7 +355,7 @@ namespace Campaign.Watch.Application.Services.Campaign
             return groups;
         }
 
-        public async Task<Dictionary<string, double>> ObterTaxaSucessoExecucoesAsync(string clientName = null,DateTime? dataInicio = null,DateTime? dataFim = null)
+        public async Task<Dictionary<string, double>> ObterTaxaSucessoExecucoesAsync(string clientName = null, DateTime? dataInicio = null, DateTime? dataFim = null)
         {
             IEnumerable<CampaignEntity> campaigns;
 
@@ -409,24 +368,26 @@ namespace Campaign.Watch.Application.Services.Campaign
                 campaigns = await _campaignService.ObterTodasAsCampanhasAsync();
             }
 
-            var allExecutions = campaigns
-                .SelectMany(c => c.Executions ?? Enumerable.Empty<Execution>())
-                .Where(e => e.Status != "MissingInSource");
+            var allExecutions = new List<ExecutionEntity>();
+            foreach (var campaign in campaigns)
+            {
+                var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(campaign.Id);
+                allExecutions.AddRange(executions.Where(e => e.Status != "MissingInSource"));
+            }
 
             if (dataInicio.HasValue)
             {
-                allExecutions = allExecutions.Where(e => e.StartDate >= dataInicio.Value);
+                allExecutions = allExecutions.Where(e => e.StartDate >= dataInicio.Value).ToList();
             }
 
             if (dataFim.HasValue)
             {
-                allExecutions = allExecutions.Where(e => e.StartDate <= dataFim.Value);
+                allExecutions = allExecutions.Where(e => e.StartDate <= dataFim.Value).ToList();
             }
 
-            var executionsList = allExecutions.ToList();
-            var total = executionsList.Count;
-            var successful = executionsList.Count(e => !e.HasMonitoringErrors && e.Status == "Completed");
-            var withErrors = executionsList.Count(e => e.HasMonitoringErrors);
+            var total = allExecutions.Count;
+            var successful = allExecutions.Count(e => !e.HasMonitoringErrors && e.Status == "Completed");
+            var withErrors = allExecutions.Count(e => e.HasMonitoringErrors);
 
             return new Dictionary<string, double>
             {
@@ -449,36 +410,43 @@ namespace Campaign.Watch.Application.Services.Campaign
             foreach (var campaign in campaigns)
             {
                 var response = _mapper.Map<CampaignMonitoringResponse>(campaign);
-                response.Metrics = await CalcularMetricasCampanhaAsync(campaign);
+                var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(campaign.Id);
+                response.Metrics = await CalcularMetricasCampanhaAsync(campaign, executions);
                 responses.Add(response);
             }
 
             return responses;
         }
 
-        private async Task<CampaignMetricsDto> CalcularMetricasCampanhaAsync(CampaignEntity campaign)
+        private async Task<CampaignMetricsDto> CalcularMetricasCampanhaAsync(CampaignEntity campaign, IEnumerable<ExecutionEntity> executions)
         {
-            var executions = campaign.Executions ?? Enumerable.Empty<Execution>();
             var validExecutions = executions.Where(e => e.Status != "MissingInSource").ToList();
 
             var metrics = new CampaignMetricsDto
             {
                 TotalExecutions = validExecutions.Count,
                 CompletedExecutions = validExecutions.Count(e => e.Status == "Completed"),
-                FailedExecutions = validExecutions.Count(e => e.Status == "Error" || e.HasMonitoringErrors),
-                InProgressExecutions = validExecutions.Count(e => e.Status != "Completed" && e.Status != "Error"),
-                LastExecutionDate = validExecutions.Any() ? validExecutions.Max(e => e.StartDate) : (DateTime?)null,
+                FailedExecutions = validExecutions.Count(e =>
+                    e.Status == "Error" || e.HasMonitoringErrors),
+                InProgressExecutions = validExecutions.Count(e =>
+                    e.Status != "Completed" && e.Status != "Error"),
+                LastExecutionDate = validExecutions.Any() ?
+                    validExecutions.Max(e => e.StartDate) : null,
                 NextScheduledExecution = campaign.NextExecutionMonitoring
             };
 
             if (metrics.TotalExecutions > 0)
             {
-                metrics.SuccessRate = (double)metrics.CompletedExecutions / metrics.TotalExecutions * 100;
+                metrics.SuccessRate = (double)metrics.CompletedExecutions /
+                    metrics.TotalExecutions * 100;
 
-                var executionsWithDuration = validExecutions.Where(e => e.TotalDurationInSeconds.HasValue).ToList();
+                var executionsWithDuration = validExecutions
+                    .Where(e => e.TotalDurationInSeconds.HasValue).ToList();
+
                 if (executionsWithDuration.Any())
                 {
-                    var avgSeconds = executionsWithDuration.Average(e => e.TotalDurationInSeconds.Value);
+                    var avgSeconds = executionsWithDuration
+                        .Average(e => e.TotalDurationInSeconds.Value);
                     metrics.AverageExecutionTime = TimeSpan.FromSeconds(avgSeconds);
                 }
             }
@@ -486,27 +454,31 @@ namespace Campaign.Watch.Application.Services.Campaign
             return metrics;
         }
 
-        private ExecutionHealthSummaryDto CalcularResumoSaudeExecucao(Execution execution)
+        private ExecutionHealthSummaryDto CalcularResumoSaudeExecucao(ExecutionEntity execution)
         {
-            var steps = execution.Steps ?? Enumerable.Empty<Workflows>();
+            var steps = execution.Steps ?? Enumerable.Empty<WorkflowStepEntity>();
 
             return new ExecutionHealthSummaryDto
             {
                 OverallHealth = execution.HasMonitoringErrors ? "Error" : "Healthy",
                 TotalSteps = steps.Count(),
-                HealthySteps = steps.Count(s => string.IsNullOrEmpty(s.Error as string) && string.IsNullOrEmpty(s.MonitoringNotes as string)),
-                StepsWithWarnings = steps.Count(s => !string.IsNullOrEmpty(s.MonitoringNotes as string) && string.IsNullOrEmpty(s.Error as string)),
-                StepsWithErrors = steps.Count(s => !string.IsNullOrEmpty(s.Error as string)),
-                CriticalSteps = 0, 
-                MainIssues = steps
-                          .Where(s => !string.IsNullOrEmpty(s.MonitoringNotes as string) || !string.IsNullOrEmpty(s.Error as string))
-                          .Select(s => (s.MonitoringNotes as string) ?? (s.Error as string)) .Take(5) .ToList()
+                HealthySteps = steps.Count(s =>
+                    string.IsNullOrEmpty(s.Error) && string.IsNullOrEmpty(s.MonitoringNotes)),
+                StepsWithWarnings = steps.Count(s =>
+                    !string.IsNullOrEmpty(s.MonitoringNotes) && string.IsNullOrEmpty(s.Error)),
+                StepsWithErrors = steps.Count(s => !string.IsNullOrEmpty(s.Error)),
+                CriticalSteps = 0,
+                MainIssues = steps
+                    .Where(s => !string.IsNullOrEmpty(s.MonitoringNotes) ||
+                               !string.IsNullOrEmpty(s.Error))
+                    .Select(s => s.MonitoringNotes ?? s.Error)
+                    .Take(5)
+                    .ToList()
             };
         }
 
         private void AnalisarProblemasCampanha(CampaignEntity campaign, CampaignDiagnosticResponse diagnostic)
         {
-            // Verificar erros de integração
             if (campaign.HealthStatus?.HasIntegrationErrors == true)
             {
                 diagnostic.Issues.Add(new DiagnosticIssueDto
@@ -519,7 +491,6 @@ namespace Campaign.Watch.Application.Services.Campaign
                 });
             }
 
-            // Verificar execuções pendentes
             if (campaign.HealthStatus?.HasPendingExecution == true)
             {
                 diagnostic.Issues.Add(new DiagnosticIssueDto
@@ -532,7 +503,6 @@ namespace Campaign.Watch.Application.Services.Campaign
                 });
             }
 
-            // Verificar se está inativa quando deveria estar ativa
             if (!campaign.IsActive && campaign.Scheduler != null &&
                 DateTime.UtcNow >= campaign.Scheduler.StartDateTime)
             {
@@ -554,24 +524,26 @@ namespace Campaign.Watch.Application.Services.Campaign
                 diagnostic.Recommendations.Add(new DiagnosticRecommendationDto
                 {
                     Title = "Verificar Integração",
-                    Description = "Há problemas de integração detectados. Verifique as configurações de canal e conectividade.",
+                    Description = "Há problemas de integração detectados. " +
+                                 "Verifique as configurações de canal e conectividade.",
                     Priority = "High"
                 });
             }
 
-            if (campaign.Executions != null && campaign.Executions.Count > 10)
+            if (campaign.ExecutionsWithErrors > 0 && campaign.TotalExecutionsProcessed > 10)
             {
-                var recentFailureRate = campaign.Executions
-                    .OrderByDescending(e => e.StartDate)
-                    .Take(10)
-                    .Count(e => e.HasMonitoringErrors);
+                var errorRate = (double)campaign.ExecutionsWithErrors /
+                               campaign.TotalExecutionsProcessed;
 
-                if (recentFailureRate > 5)
+                if (errorRate > 0.5)
                 {
                     diagnostic.Recommendations.Add(new DiagnosticRecommendationDto
                     {
                         Title = "Alta Taxa de Falha",
-                        Description = "Mais de 50% das últimas execuções falharam. Revise a configuração da campanha.",
+                        Description = $"Mais de 50% das execuções falharam " +
+                                     $"({campaign.ExecutionsWithErrors} de " +
+                                     $"{campaign.TotalExecutionsProcessed}). " +
+                                     "Revise a configuração da campanha.",
                         Priority = "High"
                     });
                 }
@@ -648,11 +620,13 @@ namespace Campaign.Watch.Application.Services.Campaign
                 .ToList();
         }
 
-        private async Task<List<RecentIssueDto>> GerarProblemasRecentesAsync(List<CampaignEntity> campaigns)
+        private async Task<List<RecentIssueDto>> GerarProblemasRecentesAsync(
+            List<CampaignEntity> campaigns)
         {
             var issues = new List<RecentIssueDto>();
 
-            foreach (var campaign in campaigns.Where(c => c.HealthStatus?.HasIntegrationErrors == true).Take(10))
+            foreach (var campaign in campaigns
+                .Where(c => c.HealthStatus?.HasIntegrationErrors == true).Take(10))
             {
                 issues.Add(new RecentIssueDto
                 {
@@ -700,6 +674,16 @@ namespace Campaign.Watch.Application.Services.Campaign
                 return "Inactive";
 
             return "Healthy";
+        }
+
+        public Task<CampaignMonitoringResponse> ObterCampanhaMonitoradaPorIdCampanhaAsync(string clientName, string idCampanha)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasPorClienteAsync(string clientName)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

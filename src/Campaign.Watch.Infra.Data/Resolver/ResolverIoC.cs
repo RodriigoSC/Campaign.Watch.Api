@@ -28,6 +28,9 @@ namespace Campaign.Watch.Infra.Data.Resolver
             services.AddTransient<ICampaignRepository, CampaignRepository>();
             services.AddTransient<ICampaignService, CampaignService>();
 
+            services.AddTransient<IExecutionRepository, ExecutionRepository>();
+
+
             return services;
         }
     }
