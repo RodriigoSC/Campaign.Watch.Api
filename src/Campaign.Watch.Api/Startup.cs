@@ -13,6 +13,8 @@ namespace Campaign.Watch.Api
     /// </summary>
     public class Startup
     {
+        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
         /// <summary>
         /// Inicializa uma nova instância da classe Startup.
         /// </summary>
@@ -35,6 +37,22 @@ namespace Campaign.Watch.Api
         {
             // Centraliza a injeção de dependência das outras camadas da aplicação.
             Bootstrap.StartIoC(services, Configuration);
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: MyAllowSpecificOrigins,
+                                  builder =>
+                                  {
+                                      // Permite a origem específica do frontend em desenvolvimento
+                                      builder.WithOrigins("http://localhost:5173")
+                                             .AllowAnyHeader() // Permite qualquer cabeçalho na requisição
+                                             .AllowAnyMethod(); // Permite qualquer método HTTP (GET, POST, PUT, DELETE, etc.)
+                                      // Para produção, você pode querer ser mais restritivo:
+                                      // builder.WithOrigins("https://seu-dominio-de-producao.com")
+                                      //        .WithMethods("GET", "POST", "PUT", "DELETE") // Métodos específicos
+                                      //        .WithHeaders("Content-Type", "Authorization"); // Cabeçalhos específicos
+                                  });
+            });
 
             services.AddControllers();
 
@@ -65,6 +83,9 @@ namespace Campaign.Watch.Api
 
             // Habilita o roteamento.
             app.UseRouting();
+
+            //Habilita CORS
+            app.UseCors(MyAllowSpecificOrigins);
 
             // Habilita a autorização.
             app.UseAuthorization();
