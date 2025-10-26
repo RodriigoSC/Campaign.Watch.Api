@@ -26,9 +26,5 @@ namespace Campaign.Watch.Domain.Interfaces.Repositories.Campaign
         Task<IEnumerable<CampaignEntity>> ObterCampanhasComErrosDeIntegracaoAsync();
         Task<IEnumerable<CampaignEntity>> ObterCampanhasComExecucaoAtrasadaAsync();
         Task<IEnumerable<CampaignEntity>> ObterCampanhasMonitoradasComSucessoAsync();
-
-
-        Task<IEnumerable<CampaignStatusCount>> ObterCampanhasPorStatusAsync(string nomeCliente, DateTime? dataInicio, DateTime? dataFim);
-        Task<IEnumerable<CampaignMonitoringStatusCount>> ObterCampanhasPorStatusMonitoramentoAsync(string nomeCliente, DateTime? dataInicio, DateTime? dataFim);
     }
 }

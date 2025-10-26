@@ -1,6 +1,5 @@
 ﻿using Campaign.Watch.Domain.Entities.Campaign;
 using Campaign.Watch.Domain.Enums;
-using Campaign.Watch.Domain.Extensions;
 using Campaign.Watch.Domain.Interfaces.Repositories.Campaign;
 using Campaign.Watch.Infra.Data.Factories;
 using Campaign.Watch.Infra.Data.Repository.Common;
@@ -142,76 +141,6 @@ namespace Campaign.Watch.Infra.Data.Repository
         public async Task<IEnumerable<CampaignEntity>> ObterCampanhasMonitoradasComSucessoAsync()
         {
             return await _collection.Find(c => c.MonitoringStatus == MonitoringStatus.Completed || c.MonitoringStatus == MonitoringStatus.WaitingForNextExecution).ToListAsync();
-        }
-
-        
-        public async Task<IEnumerable<CampaignStatusCount>> ObterCampanhasPorStatusAsync(string nomeCliente, DateTime? dataInicio, DateTime? dataFim)
-        {
-            var filterBuilder = Builders<CampaignEntity>.Filter;
-            var matchFilter = filterBuilder.Empty;
-
-            if (!string.IsNullOrWhiteSpace(nomeCliente))
-            {
-                matchFilter &= filterBuilder.Eq(c => c.ClientName, nomeCliente);
-            }
-            if (dataInicio.HasValue)
-            {
-                matchFilter &= filterBuilder.Gte(c => c.CreatedAt, dataInicio.Value.Date);
-            }
-            if (dataFim.HasValue)
-            {
-                matchFilter &= filterBuilder.Lt(c => c.CreatedAt, dataFim.Value.Date.AddDays(1));
-            }
-
-            var sort = Builders<CampaignStatusCount>.Sort.Ascending(s => s.Status);
-
-            return await _collection.Aggregate()
-                .Match(matchFilter)
-                .Group(
-                    key => key.StatusCampaign,
-                    group => new CampaignStatusCount
-                    {
-                        Status = group.Key,
-                        Count = group.Sum(_ => 1)
-                    })
-                .Sort(sort)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<CampaignMonitoringStatusCount>> ObterCampanhasPorStatusMonitoramentoAsync(string nomeCliente, DateTime? dataInicio, DateTime? dataFim)
-        {
-            var filterBuilder = Builders<CampaignEntity>.Filter;
-            var matchFilter = filterBuilder.Empty;
-
-            if (!string.IsNullOrWhiteSpace(nomeCliente))
-            {
-                matchFilter &= filterBuilder.Eq(c => c.ClientName, nomeCliente);
-            }
-
-            if (dataInicio.HasValue)
-            {
-                matchFilter &= filterBuilder.Gte(c => c.CreatedAt, dataInicio.Value.Date);
-            }
-
-            if (dataFim.HasValue)
-            {
-                matchFilter &= filterBuilder.Lt(c => c.CreatedAt, dataFim.Value.Date.AddDays(1));
-            }
-
-            var aggregation = await _collection.Aggregate()
-                .Match(matchFilter)
-                .Group(
-                    key => key.MonitoringStatus,
-                    group => new CampaignMonitoringStatusCount
-                    {
-                        Status = group.Key,
-                        Count = group.Sum(c => 1)
-                    })
-                .SortBy(g => g.Status)
-                .ToListAsync();
-
-            return aggregation;
-        }
-                
+        }     
     }
 }

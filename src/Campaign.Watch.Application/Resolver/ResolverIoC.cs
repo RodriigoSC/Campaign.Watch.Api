@@ -12,15 +12,18 @@ namespace Campaign.Watch.Application.Resolver
     {
         public static IServiceCollection AddApplications(this IServiceCollection services)
         {
+            // Serviço de Cliente
             services.AddTransient<IClientApplication, ClientApplication>();
-            services.AddTransient<ICampaignMonitoringApplication, CampaignMonitoringApplication>();            
-            
-            services.AddAutoMapper(typeof(ClientMapper)); 
-            services.AddAutoMapper(typeof(CampaignProfile)); 
-            services.AddAutoMapper(typeof(CampaignMonitoringProfile));
-            services.AddAutoMapper(typeof(DiagnosticProfile));
 
-            //services.AddAutoMapper(typeof(ResolverIoC).Assembly);
+            // Serviços de Campanha
+            services.AddTransient<ICampaignApplication, CampaignApplication>();
+            services.AddTransient<IExecutionApplication, ExecutionApplication>();
+            services.AddTransient<IDiagnosticApplication, DiagnosticApplication>();
+            services.AddTransient<IDashboardApplication, DashboardApplication>();
+
+            // Mappers
+            services.AddAutoMapper(typeof(ClientMapper));
+            services.AddAutoMapper(typeof(CampaignMonitoringProfile));
 
             return services;
         }

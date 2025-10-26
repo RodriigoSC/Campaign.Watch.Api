@@ -1,4 +1,6 @@
 ﻿using Campaign.Watch.Application.Dtos.Campaign;
+using Campaign.Watch.Application.Dtos.Diagnostic;
+using Campaign.Watch.Application.Dtos.Execution;
 using Campaign.Watch.Application.Interfaces.Campaign;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -13,12 +15,20 @@ namespace Campaign.Watch.Api.Controllers
     [ApiController]
     public class CampaignMonitoringController : ControllerBase
     {
-        private readonly ICampaignMonitoringApplication _monitoringApp;
+        private readonly ICampaignApplication _monitoringApp;
+        private readonly IExecutionApplication _executionApp;
+        private readonly IDiagnosticApplication _diagnosticApp;
         private readonly ILogger<CampaignMonitoringController> _logger;
 
-        public CampaignMonitoringController(ICampaignMonitoringApplication monitoringApp, ILogger<CampaignMonitoringController> logger)
+        public CampaignMonitoringController(
+            ICampaignApplication monitoringApp,
+            IExecutionApplication executionApp,
+            IDiagnosticApplication diagnosticApp,
+            ILogger<CampaignMonitoringController> logger)
         {
             _monitoringApp = monitoringApp ?? throw new ArgumentNullException(nameof(monitoringApp));
+            _executionApp = executionApp ?? throw new ArgumentNullException(nameof(executionApp));
+            _diagnosticApp = diagnosticApp ?? throw new ArgumentNullException(nameof(diagnosticApp));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -164,7 +174,8 @@ namespace Campaign.Watch.Api.Controllers
             {
                 return BadRequest("ID da campanha inválido.");
             }
-            var diagnostic = await _monitoringApp.ObterDiagnosticoCampanhaAsync(id);
+            // Alterado para _diagnosticApp
+            var diagnostic = await _diagnosticApp.ObterDiagnosticoCampanhaAsync(id);
             if (diagnostic == null)
             {
                 return NotFound($"Diagnóstico não encontrado ou campanha inexistente para o ID '{id}'.");
@@ -188,9 +199,9 @@ namespace Campaign.Watch.Api.Controllers
             {
                 return BadRequest("ID da campanha inválido.");
             }
-            var executions = await _monitoringApp.ObterExecucoesPorCampanhaAsync(id);
-            // Retorna Ok com lista vazia se a campanha existe mas não tem execuções, ou 404 se a campanha não existe?
-            // Vamos retornar Ok([]) por consistência. A verificação se a campanha existe já está implícita na busca.
+            // Alterado para _executionApp
+            var executions = await _executionApp.ObterExecucoesPorCampanhaAsync(id);
+
             return Ok(executions);
         }
     }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Campaign.Watch.Application.Dtos.Campaign
+namespace Campaign.Watch.Application.Dtos.Dashboard
 {
     public class DashboardSummaryDto
     {

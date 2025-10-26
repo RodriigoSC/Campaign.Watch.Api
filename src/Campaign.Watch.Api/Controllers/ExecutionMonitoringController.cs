@@ -1,6 +1,5 @@
-﻿using Campaign.Watch.Application.Dtos.Campaign;
+﻿using Campaign.Watch.Application.Dtos.Execution;
 using Campaign.Watch.Application.Interfaces.Campaign;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,13 +12,13 @@ namespace Campaign.Watch.Api.Controllers
     [ApiController]
     public class ExecutionMonitoringController : ControllerBase
     {
-
-        private readonly ICampaignMonitoringApplication _monitoringApp;
+        // Alterado de ICampaignMonitoringApplication para IExecutionApplication
+        private readonly IExecutionApplication _executionApp;
         private readonly ILogger<ExecutionMonitoringController> _logger;
 
-        public ExecutionMonitoringController(ICampaignMonitoringApplication monitoringApp, ILogger<ExecutionMonitoringController> logger)
+        public ExecutionMonitoringController(IExecutionApplication executionApp, ILogger<ExecutionMonitoringController> logger)
         {
-            _monitoringApp = monitoringApp ?? throw new ArgumentNullException(nameof(monitoringApp));
+            _executionApp = executionApp ?? throw new ArgumentNullException(nameof(executionApp));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -40,7 +39,8 @@ namespace Campaign.Watch.Api.Controllers
                 return BadRequest("ID da execução inválido.");
             }
 
-            var execution = await _monitoringApp.ObterExecucaoPorIdAsync(id);
+            // Alterado de _monitoringApp para _executionApp
+            var execution = await _executionApp.ObterExecucaoPorIdAsync(id);
             if (execution == null)
             {
                 return NotFound($"Execução com ID '{id}' não encontrada.");
@@ -63,7 +63,9 @@ namespace Campaign.Watch.Api.Controllers
             [FromQuery] DateTime? dataFim = null)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/executions/with-errors");
-            var executions = await _monitoringApp.ObterExecucoesComErrosAsync(clientName, dataInicio, dataFim);
+
+            // Alterado de _monitoringApp para _executionApp
+            var executions = await _executionApp.ObterExecucoesComErrosAsync(clientName, dataInicio, dataFim);
             return Ok(executions);
         }
     }

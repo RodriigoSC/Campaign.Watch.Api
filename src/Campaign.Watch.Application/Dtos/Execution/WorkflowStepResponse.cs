@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Campaign.Watch.Application.Dtos.Campaign;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Campaign.Watch.Application.Dtos.Campaign
+namespace Campaign.Watch.Application.Dtos.Execution
 {
     /// <summary>
     /// DTO para step de workflow com informações detalhadas

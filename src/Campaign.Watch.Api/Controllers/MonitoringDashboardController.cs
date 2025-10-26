@@ -1,4 +1,5 @@
-﻿using Campaign.Watch.Application.Dtos.Campaign;
+﻿using Campaign.Watch.Application.Dtos.Dashboard;
+using Campaign.Watch.Application.Dtos.Diagnostic;
 using Campaign.Watch.Application.Interfaces.Campaign;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -12,13 +13,18 @@ namespace Campaign.Watch.Api.Controllers
     [ApiController]
     public class MonitoringDashboardController : ControllerBase
     {
-
-        private readonly ICampaignMonitoringApplication _monitoringApp;
+        // Serviços de aplicação divididos
+        private readonly IDashboardApplication _dashboardApp;
+        private readonly IDiagnosticApplication _diagnosticApp;
         private readonly ILogger<MonitoringDashboardController> _logger;
 
-        public MonitoringDashboardController(ICampaignMonitoringApplication monitoringApp, ILogger<MonitoringDashboardController> logger)
+        public MonitoringDashboardController(
+            IDashboardApplication dashboardApp,
+            IDiagnosticApplication diagnosticApp,
+            ILogger<MonitoringDashboardController> logger)
         {
-            _monitoringApp = monitoringApp ?? throw new ArgumentNullException(nameof(monitoringApp));
+            _dashboardApp = dashboardApp ?? throw new ArgumentNullException(nameof(dashboardApp));
+            _diagnosticApp = diagnosticApp ?? throw new ArgumentNullException(nameof(diagnosticApp));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -32,7 +38,7 @@ namespace Campaign.Watch.Api.Controllers
         public async Task<IActionResult> ObterDadosDashboard([FromQuery] string clientName = null)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/dashboard");
-            var dashboardData = await _monitoringApp.ObterDadosDashboardAsync(clientName);
+            var dashboardData = await _dashboardApp.ObterDadosDashboardAsync(clientName);
             return Ok(dashboardData);
         }
 
@@ -51,7 +57,7 @@ namespace Campaign.Watch.Api.Controllers
             {
                 return BadRequest("O parâmetro 'proximasHoras' deve ser positivo.");
             }
-            var upcoming = await _monitoringApp.ObterProximasExecucoesAsync(proximasHoras);
+            var upcoming = await _dashboardApp.ObterProximasExecucoesAsync(proximasHoras);
             return Ok(upcoming);
         }
 
@@ -62,7 +68,7 @@ namespace Campaign.Watch.Api.Controllers
         /// <param name="desde">Filtra problemas detectados a partir desta data/hora.</param>
         /// <param name="limite">Número máximo de problemas a retornar (padrão 100).</param>
         /// <returns>Uma lista dos problemas recentes.</returns>
-        [HttpGet("recent-issues")] // Renomeado de 'detected-issues' para 'recent-issues' conforme dashboard
+        [HttpGet("recent-issues")]
         [ProducesResponseType(typeof(IEnumerable<DiagnosticIssueDto>), 200)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> ObterProblemasRecentes(
@@ -75,7 +81,8 @@ namespace Campaign.Watch.Api.Controllers
             {
                 return BadRequest("O parâmetro 'limite' deve estar entre 1 e 1000.");
             }
-            var issues = await _monitoringApp.ObterProblemasDetectadosAsync(severity, desde, limite);
+            // Lógica movida para o serviço de Diagnóstico
+            var issues = await _diagnosticApp.ObterProblemasDetectadosAsync(severity, desde, limite);
             return Ok(issues);
         }
 
@@ -94,7 +101,7 @@ namespace Campaign.Watch.Api.Controllers
             [FromQuery] DateTime? dataFim = null)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/dashboard/stats/by-monitoring-status");
-            var counts = await _monitoringApp.ObterContagemPorStatusMonitoramentoAsync(clientName, dataInicio, dataFim);
+            var counts = await _dashboardApp.ObterContagemPorStatusMonitoramentoAsync(clientName, dataInicio, dataFim);
             return Ok(counts);
         }
 
@@ -108,7 +115,7 @@ namespace Campaign.Watch.Api.Controllers
         public async Task<IActionResult> ObterContagemPorNivelSaude([FromQuery] string clientName = null)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/dashboard/stats/by-health-level");
-            var groups = await _monitoringApp.ObterContagemPorNivelSaudeAsync(clientName);
+            var groups = await _dashboardApp.ObterContagemPorNivelSaudeAsync(clientName);
             return Ok(groups);
         }
 
@@ -127,7 +134,7 @@ namespace Campaign.Watch.Api.Controllers
             [FromQuery] DateTime? dataFim = null)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/dashboard/stats/success-rate");
-            var rates = await _monitoringApp.ObterTaxaSucessoExecucoesAsync(clientName, dataInicio, dataFim);
+            var rates = await _dashboardApp.ObterTaxaSucessoExecucoesAsync(clientName, dataInicio, dataFim);
             return Ok(rates);
         }
     }

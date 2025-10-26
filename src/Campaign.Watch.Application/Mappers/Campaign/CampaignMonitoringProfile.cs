@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Campaign.Watch.Application.Dtos.Campaign;
+using Campaign.Watch.Application.Dtos.Common; // <--- ADICIONADO
+using Campaign.Watch.Application.Dtos.Execution; // <--- ADICIONADO
 using Campaign.Watch.Domain.Entities.Campaign;
 using Campaign.Watch.Domain.Extensions;
 
@@ -43,8 +45,10 @@ namespace Campaign.Watch.Application.Mappers.Campaign
             CreateMap<LeadsDataEntity, LeadsDataResponse>();
 
             // ============================================
-            // Mapeamentos de estruturas comuns
+            // Mapeamentos de estruturas comuns (A CORREÇÃO ESTÁ AQUI)
             // ============================================
+            // Isso informa ao AutoMapper como mapear as propriedades aninhadas
+            // que nós movemos para a pasta /Common/
             CreateMap<MonitoringHealthStatus, MonitoringHealthStatusDto>();
             CreateMap<Scheduler, SchedulerResponse>();
         }

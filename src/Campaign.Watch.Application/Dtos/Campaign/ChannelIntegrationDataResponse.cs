@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Campaign.Watch.Application.Dtos.Common;
 
 namespace Campaign.Watch.Application.Dtos.Campaign
 {
@@ -10,24 +10,9 @@ namespace Campaign.Watch.Application.Dtos.Campaign
         public string ChannelName { get; set; }
         public string IntegrationStatus { get; set; }
         public string TemplateId { get; set; }
+
+        // DTOs aninhados removidos e importados
         public FileInfoDataResponse File { get; set; }
         public LeadsDataResponse Leads { get; set; }
-    }
-
-    public class FileInfoDataResponse
-    {
-        public string Name { get; set; }
-        public DateTime? StartedAt { get; set; }
-        public DateTime? FinishedAt { get; set; }
-        public long Total { get; set; }
-    }
-
-    public class LeadsDataResponse
-    {
-        public int? Blocked { get; set; }
-        public int? Deduplication { get; set; }
-        public int? Error { get; set; }
-        public int? Optout { get; set; }
-        public int? Success { get; set; }
     }
 }

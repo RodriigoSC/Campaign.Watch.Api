@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Campaign.Watch.Application.Dtos.Common;
+using System;
 
 namespace Campaign.Watch.Application.Dtos.Campaign
 {
@@ -19,6 +20,8 @@ namespace Campaign.Watch.Application.Dtos.Campaign
         public string MonitoringStatus { get; set; }
         public DateTime? NextExecutionMonitoring { get; set; }
         public DateTime? LastCheckMonitoring { get; set; }
+
+        // DTOs aninhados removidos e importados
         public MonitoringHealthStatusDto HealthStatus { get; set; }
         public SchedulerResponse Scheduler { get; set; }
 
@@ -30,25 +33,5 @@ namespace Campaign.Watch.Application.Dtos.Campaign
 
         // Métricas calculadas (opcional - pode ser removido se preferir endpoint separado)
         public CampaignMetricsDto Metrics { get; set; }
-    }
-
-    /// <summary>
-    /// DTO para agrupar as flags de saúde e problemas do monitoramento.
-    /// </summary>
-    public class MonitoringHealthStatusDto
-    {
-        public bool IsFullyVerified { get; set; }
-        public bool HasPendingExecution { get; set; }
-        public bool HasIntegrationErrors { get; set; }
-        public string LastExecutionWithIssueId { get; set; }
-        public string LastMessage { get; set; }
-    }
-
-    public class SchedulerResponse
-    {
-        public DateTime StartDateTime { get; set; }
-        public DateTime? EndDateTime { get; set; }
-        public bool IsRecurrent { get; set; }
-        public string Crontab { get; set; }
     }
 }

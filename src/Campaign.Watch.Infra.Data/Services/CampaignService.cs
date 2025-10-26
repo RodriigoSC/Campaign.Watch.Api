@@ -122,15 +122,5 @@ namespace Campaign.Watch.Infra.Data.Services
         {
             return await _campaignRepository.ObterCampanhasMonitoradasComSucessoAsync();
         }
-
-        public async Task<IEnumerable<CampaignStatusCount>> ObterCampanhasPorStatusAsync(string nomeCliente, DateTime? dataInicio, DateTime? dataFim)
-        {
-            return await _campaignRepository.ObterCampanhasPorStatusAsync(nomeCliente, dataInicio, dataFim);
-        }
-
-        public async Task<IEnumerable<CampaignMonitoringStatusCount>> ObterCampanhasPorStatusMonitoramentoAsync(string nomeCliente, DateTime? dataInicio, DateTime? dataFim)
-        {
-            return await _campaignRepository.ObterCampanhasPorStatusMonitoramentoAsync(nomeCliente, dataInicio, dataFim);
-        }
     }
 }
