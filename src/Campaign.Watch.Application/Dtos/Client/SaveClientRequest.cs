@@ -1,5 +1,4 @@
-﻿using Campaign.Watch.Domain.Enums;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Campaign.Watch.Application.Dtos.Client
@@ -15,7 +14,7 @@ namespace Campaign.Watch.Application.Dtos.Client
         [Required]
         public CampaignConfigDto CampaignConfig { get; set; }
 
-        public List<EffectiveChannelDto> EffectiveChannels { get; set; }
+        public EffectiveChannelsDto EffectiveChannels { get; set; }
     }
 
     public class CampaignConfigDto
@@ -25,13 +24,21 @@ namespace Campaign.Watch.Application.Dtos.Client
         public string Database { get; set; }
     }
 
-    public class EffectiveChannelDto
+    public class EffectiveChannelsDto
     {
-        public ChannelType TypeChannel { get; set; }
+        public List<ChannelDbConfigDto> EFFMAIL { get; set; } = new();
+        public List<ChannelDbConfigDto> EFFSMS { get; set; } = new();
+        public List<ChannelDbConfigDto> EFFPUSH { get; set; } = new();
+        public List<ChannelDbConfigDto> EFFWHATSAPP { get; set; } = new();
+    }
+
+    public class ChannelDbConfigDto
+    {
         [Required]
         public string Name { get; set; }
         [Required]
-        public string Database { get; set; }
-        public string TenantID { get; set; }
+        public string Integration { get; set; }
+        [Required]
+        public string DataBase { get; set; }
     }
 }
