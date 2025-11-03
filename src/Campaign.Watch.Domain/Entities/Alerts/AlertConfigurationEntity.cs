@@ -1,4 +1,5 @@
 ﻿using Campaign.Watch.Domain.Entities.Common;
+using Campaign.Watch.Domain.Enums.Alerts;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
@@ -13,11 +14,14 @@ namespace Campaign.Watch.Domain.Entities.Alerts
 
         public string Name { get; set; }
 
-        public string Type { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public AlertChannelType Type { get; set; }
 
-        public string ConditionType { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public AlertConditionType? ConditionType { get; set; }
 
-        public string MinSeverity { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public AlertSeverity? MinSeverity { get; set; }
 
         public string Recipient { get; set; }
 
