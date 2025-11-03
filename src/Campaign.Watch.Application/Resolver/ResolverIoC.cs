@@ -1,7 +1,10 @@
-﻿using Campaign.Watch.Application.Interfaces.Campaign;
+﻿using Campaign.Watch.Application.Interfaces.Alerts;
+using Campaign.Watch.Application.Interfaces.Campaign;
 using Campaign.Watch.Application.Interfaces.Client;
+using Campaign.Watch.Application.Mappers.Alerts;
 using Campaign.Watch.Application.Mappers.Campaign;
 using Campaign.Watch.Application.Mappers.Client;
+using Campaign.Watch.Application.Services.Alerts;
 using Campaign.Watch.Application.Services.Campaign;
 using Campaign.Watch.Application.Services.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,9 +24,12 @@ namespace Campaign.Watch.Application.Resolver
             services.AddTransient<IDiagnosticApplication, DiagnosticApplication>();
             services.AddTransient<IDashboardApplication, DashboardApplication>();
 
+            services.AddTransient<IAlertApplication, AlertApplication>();
+
             // Mappers
             services.AddAutoMapper(typeof(ClientMapper));
             services.AddAutoMapper(typeof(CampaignMonitoringProfile));
+            services.AddAutoMapper(typeof(AlertProfile));
 
             return services;
         }

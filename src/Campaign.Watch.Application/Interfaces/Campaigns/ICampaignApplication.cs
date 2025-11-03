@@ -10,7 +10,8 @@ namespace Campaign.Watch.Application.Interfaces.Campaign
         Task<CampaignMonitoringResponse> ObterCampanhaMonitoradaPorIdAsync(string id);
         Task<CampaignMonitoringResponse> ObterCampanhaMonitoradaPorIdCampanhaAsync(string clientName, string idCampanha);
         Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasPorClienteAsync(string clientName);
-        Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasAsync(string clientName = null, string monitoringStatus = null, bool? hasErrors = null, DateTime? dataInicio = null, DateTime? dataFim = null, int pagina = 1, int tamanhoPagina = 50);
+        Task<PaginatedResponse<CampaignMonitoringResponse>> ObterCampanhasMonitoradasAsync(string clientName, string monitoringStatus, bool? hasErrors, DateTime? dataInicio,
+            DateTime? dataFim, int pagina, int tamanhoPagina);
         Task<CampaignMetricsDto> ObterMetricasCampanhaAsync(string campaignId);
     }
 }

@@ -1,8 +1,11 @@
-﻿using Campaign.Watch.Domain.Interfaces.Repositories.Campaign;
+﻿using Campaign.Watch.Domain.Interfaces.Repositories.Alerts;
+using Campaign.Watch.Domain.Interfaces.Repositories.Campaign;
 using Campaign.Watch.Domain.Interfaces.Repositories.Client;
 using Campaign.Watch.Domain.Interfaces.Services.Campaign;
 using Campaign.Watch.Domain.Interfaces.Services.Client;
-using Campaign.Watch.Infra.Data.Repository;
+using Campaign.Watch.Infra.Data.Repository.Alerts;
+using Campaign.Watch.Infra.Data.Repository.Campaigns;
+using Campaign.Watch.Infra.Data.Repository.Clients;
 using Campaign.Watch.Infra.Data.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +32,9 @@ namespace Campaign.Watch.Infra.Data.Resolver
             services.AddTransient<ICampaignService, CampaignService>();
 
             services.AddTransient<IExecutionRepository, ExecutionRepository>();
+
+            services.AddTransient<IAlertConfigurationRepository, AlertConfigurationRepository>();
+            services.AddTransient<IAlertHistoryRepository, AlertHistoryRepository>();
 
 
             return services;

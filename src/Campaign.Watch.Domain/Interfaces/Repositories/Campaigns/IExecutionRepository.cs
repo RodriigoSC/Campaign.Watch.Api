@@ -2,8 +2,6 @@
 using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Campaign.Watch.Domain.Interfaces.Repositories.Campaign
@@ -13,5 +11,6 @@ namespace Campaign.Watch.Domain.Interfaces.Repositories.Campaign
         Task<ExecutionEntity> ObterExecucaoPorIdAsync(string originalExecutionId);
         Task<IEnumerable<ExecutionEntity>> ObterExecucoesPorCampanhaAsync(ObjectId campaignMonitoringId);
         Task<IEnumerable<ExecutionEntity>> ObterExecucoesComErrosAsync(string clientName = null, System.DateTime? dataInicio = null, System.DateTime? dataFim = null);
+        Task<IEnumerable<ExecutionEntity>> ObterExecucoesPorCampanhasEDataAsync(IEnumerable<ObjectId> campaignMonitoringIds, DateTime dataInicio, DateTime dataFim);
     }
 }

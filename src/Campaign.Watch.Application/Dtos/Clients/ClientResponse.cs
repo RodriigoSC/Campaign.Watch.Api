@@ -8,7 +8,6 @@ namespace Campaign.Watch.Application.Dtos.Client
         public string Name { get; set; }
         public bool IsActive { get; set; }
         public CampaignConfigDto CampaignConfig { get; set; } 
-        public EffectiveChannelsDto EffectiveChannels { get; set; } 
         public DateTime CreatedAt { get; set; }
         public DateTime ModifiedAt { get; set; }
     }

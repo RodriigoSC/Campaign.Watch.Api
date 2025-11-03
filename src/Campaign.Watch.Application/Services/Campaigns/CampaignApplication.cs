@@ -2,7 +2,6 @@
 using Campaign.Watch.Application.Dtos.Campaign;
 using Campaign.Watch.Application.Interfaces.Campaign;
 using Campaign.Watch.Domain.Entities.Campaign;
-using Campaign.Watch.Domain.Enums;
 using Campaign.Watch.Domain.Interfaces.Services.Campaign;
 using Campaign.Watch.Domain.Interfaces.Repositories.Campaign;
 using Microsoft.Extensions.Logging;
@@ -49,47 +48,26 @@ namespace Campaign.Watch.Application.Services.Campaign
             return response;
         }
 
-        public async Task<IEnumerable<CampaignMonitoringResponse>> ObterCampanhasMonitoradasAsync(string clientName = null, string monitoringStatus = null,
-            bool? hasErrors = null, DateTime? dataInicio = null, DateTime? dataFim = null, int pagina = 1, int tamanhoPagina = 50)
+        public async Task<PaginatedResponse<CampaignMonitoringResponse>> ObterCampanhasMonitoradasAsync(string clientName = null, string monitoringStatus = null, bool? hasErrors = null,
+            DateTime? dataInicio = null, DateTime? dataFim = null, int pagina = 1, int tamanhoPagina = 50)
         {
-            IEnumerable<CampaignEntity> campaigns;
+            var countTask = _campaignService.ContarCampanhasFiltradasAsync(
+                clientName, monitoringStatus, hasErrors, dataInicio, dataFim);
 
-            // Aplicar filtros (mantém a lógica existente)
-            if (!string.IsNullOrEmpty(clientName) && dataInicio.HasValue && dataFim.HasValue)
-            {
-                campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteOuDataAsync(
-                    clientName, dataInicio.Value, dataFim.Value);
-            }
-            else if (!string.IsNullOrEmpty(clientName))
-            {
-                campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteAsync(clientName);
-            }
-            else if (dataInicio.HasValue && dataFim.HasValue)
-            {
-                campaigns = await _campaignService.ObterTodasAsCampanhasPorDataAsync(
-                    dataInicio.Value, dataFim.Value);
-            }
-            else
-            {
-                campaigns = await _campaignService.ObterCampanhasPaginadasAsync(pagina, tamanhoPagina);
-            }
+            var campaignsTask = _campaignService.ObterCampanhasPaginadasAsync(
+                pagina, tamanhoPagina, clientName, monitoringStatus, hasErrors, dataInicio, dataFim);
 
-            // Filtrar por status de monitoramento
-            if (!string.IsNullOrEmpty(monitoringStatus) &&
-                Enum.TryParse<MonitoringStatus>(monitoringStatus, true, out var status))
-            {
-                campaigns = campaigns.Where(c => c.MonitoringStatus == status);
-            }
+            await Task.WhenAll(countTask, campaignsTask);
 
-            // Filtrar por erros
-            if (hasErrors.HasValue)
-            {
-                campaigns = campaigns.Where(c =>
-                    c.HealthStatus?.HasIntegrationErrors == hasErrors.Value);
-            }
+            long totalItems = await countTask;
+            IEnumerable<CampaignEntity> campaigns = await campaignsTask;
 
-            return await MapearCampanhasComMetricasAsync(campaigns);
+            var mappedItems = await MapearCampanhasComMetricasAsync(campaigns);
+
+            return new PaginatedResponse<CampaignMonitoringResponse>(mappedItems, totalItems);
         }
+
+
 
         #endregion
 

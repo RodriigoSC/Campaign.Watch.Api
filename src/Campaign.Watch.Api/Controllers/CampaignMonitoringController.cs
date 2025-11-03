@@ -44,7 +44,7 @@ namespace Campaign.Watch.Api.Controllers
         /// <param name="tamanhoPagina">Número de itens por página (padrão 50).</param>
         /// <returns>Uma lista de campanhas monitoradas.</returns>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<CampaignMonitoringResponse>), 200)]
+        [ProducesResponseType(typeof(PaginatedResponse<CampaignMonitoringResponse>), 200)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> ObterCampanhasMonitoradas(
             [FromQuery] string clientName = null,
@@ -56,13 +56,15 @@ namespace Campaign.Watch.Api.Controllers
             [FromQuery] int tamanhoPagina = 50)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/campaigns");
-            // Validação básica de paginação
-            if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 1000) // Limite máximo de 1000 por página
+            if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 1000)
             {
                 return BadRequest("Parâmetros de paginação inválidos.");
             }
-            var campaigns = await _monitoringApp.ObterCampanhasMonitoradasAsync(clientName, monitoringStatus, hasErrors, dataInicio, dataFim, pagina, tamanhoPagina);
-            return Ok(campaigns);
+
+            var result = await _monitoringApp.ObterCampanhasMonitoradasAsync(
+                clientName, monitoringStatus, hasErrors, dataInicio, dataFim, pagina, tamanhoPagina);
+
+            return Ok(result);
         }
 
         /// <summary>

@@ -7,7 +7,7 @@ namespace Campaign.Watch.Application.Interfaces.Campaign
 {
     public interface IDashboardApplication
     {
-        Task<MonitoringDashboardResponse> ObterDadosDashboardAsync(string clientName = null);
+        Task<MonitoringDashboardResponse> ObterDadosDashboardAsync(string clientName = null, DateTime? dataInicio = null, DateTime? dataFim = null);
         Task<IEnumerable<UpcomingExecutionDto>> ObterProximasExecucoesAsync(int proximasHoras = 24);
         Task<IEnumerable<CampaignStatusGroupDto>> ObterContagemPorStatusMonitoramentoAsync(string clientName = null, DateTime? dataInicio = null, DateTime? dataFim = null);
         Task<IEnumerable<CampaignHealthGroupDto>> ObterContagemPorNivelSaudeAsync(string clientName = null);

@@ -86,12 +86,7 @@ namespace Campaign.Watch.Infra.Data.Services
         public async Task<IEnumerable<CampaignEntity>> ObterCampanhasAtivasAsync()
         {
             return await _campaignRepository.ObterCampanhasAtivasAsync();
-        }
-
-        public async Task<IEnumerable<CampaignEntity>> ObterCampanhasPaginadasAsync(int pagina, int tamanhoPagina)
-        {
-            return await _campaignRepository.ObterCampanhasPaginadasAsync(pagina, tamanhoPagina);
-        }
+        }       
 
         public async Task<int> ContarCampanhasPorClienteAsync(string nomeCliente)
         {
@@ -121,6 +116,16 @@ namespace Campaign.Watch.Infra.Data.Services
         public async Task<IEnumerable<CampaignEntity>> ObterCampanhasMonitoradasComSucessoAsync()
         {
             return await _campaignRepository.ObterCampanhasMonitoradasComSucessoAsync();
+        }        
+
+        public async Task<long> ContarCampanhasFiltradasAsync(string clientName, string monitoringStatus, bool? hasErrors, DateTime? dataInicio, DateTime? dataFim)
+        {
+            return await _campaignRepository.ContarCampanhasFiltradasAsync(clientName, monitoringStatus, hasErrors, dataInicio, dataFim);
+        }
+
+        public async Task<IEnumerable<CampaignEntity>> ObterCampanhasPaginadasAsync(int pagina, int tamanhoPagina, string clientName, string monitoringStatus, bool? hasErrors, DateTime? dataInicio, DateTime? dataFim)
+        {
+            return await _campaignRepository.ObterCampanhasPaginadasAsync(pagina, tamanhoPagina, clientName, monitoringStatus,hasErrors, dataInicio, dataFim);
         }
     }
 }

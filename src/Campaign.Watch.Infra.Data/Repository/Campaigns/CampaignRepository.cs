@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Campaign.Watch.Infra.Data.Repository
+namespace Campaign.Watch.Infra.Data.Repository.Campaigns
 {
     public class CampaignRepository : CommonRepository<CampaignEntity>, ICampaignRepository
     {
@@ -87,15 +87,7 @@ namespace Campaign.Watch.Infra.Data.Repository
         public async Task<int> ContarCampanhasPorClienteAsync(string nomeCliente)
         {
             return (int)await _collection.CountDocumentsAsync(c => c.ClientName == nomeCliente);
-        }
-
-        public async Task<IEnumerable<CampaignEntity>> ObterCampanhasPaginadasAsync(int pagina, int tamanhoPagina)
-        {
-            return await _collection.Find(FilterDefinition<CampaignEntity>.Empty)
-                                      .Skip((pagina - 1) * tamanhoPagina)
-                                      .Limit(tamanhoPagina)
-                                      .ToListAsync();
-        }
+        }       
 
         public async Task<CampaignEntity> ObterCampanhaPorNomeAsync(string nomeCampanha)
         {
@@ -141,6 +133,60 @@ namespace Campaign.Watch.Infra.Data.Repository
         public async Task<IEnumerable<CampaignEntity>> ObterCampanhasMonitoradasComSucessoAsync()
         {
             return await _collection.Find(c => c.MonitoringStatus == MonitoringStatus.Completed || c.MonitoringStatus == MonitoringStatus.WaitingForNextExecution).ToListAsync();
-        }     
+        }
+
+        public async Task<long> ContarCampanhasFiltradasAsync(string clientName, string monitoringStatus, bool? hasErrors, DateTime? dataInicio, DateTime? dataFim)
+        {
+            var filter = BuildFilterDefinition(clientName, monitoringStatus, hasErrors, dataInicio, dataFim);
+            return await _collection.CountDocumentsAsync(filter);
+        }
+
+        public async Task<IEnumerable<CampaignEntity>> ObterCampanhasPaginadasAsync(int pagina, int tamanhoPagina, string clientName, string monitoringStatus, bool? hasErrors,
+            DateTime? dataInicio, DateTime? dataFim)
+        {
+            var filter = BuildFilterDefinition(clientName, monitoringStatus, hasErrors, dataInicio, dataFim);
+
+            return await _collection.Find(filter)
+                                    .Sort(Builders<CampaignEntity>.Sort.Descending(c => c.LastCheckMonitoring))
+                                    .Skip((pagina - 1) * tamanhoPagina)
+                                    .Limit(tamanhoPagina)
+                                    .ToListAsync();
+        }
+
+        private FilterDefinition<CampaignEntity> BuildFilterDefinition(string clientName, string monitoringStatus, bool? hasErrors, DateTime? dataInicio, DateTime? dataFim)
+        {
+            var filterBuilder = Builders<CampaignEntity>.Filter;
+            var filter = filterBuilder.Empty; // Começa com um filtro vazio
+
+            if (!string.IsNullOrEmpty(clientName))
+            {
+                filter &= filterBuilder.Eq(c => c.ClientName, clientName);
+            }
+
+            if (!string.IsNullOrEmpty(monitoringStatus) &&
+                Enum.TryParse<MonitoringStatus>(monitoringStatus, true, out var statusEnum))
+            {
+                filter &= filterBuilder.Eq(c => c.MonitoringStatus, statusEnum);
+            }
+
+            if (hasErrors.HasValue)
+            {
+                filter &= filterBuilder.Eq(c => c.HealthStatus.HasIntegrationErrors, hasErrors.Value);
+            }
+
+            if (dataInicio.HasValue)
+            {
+                // Filtra por 'CreatedAt' (data de criação no monitoramento)
+                filter &= filterBuilder.Gte(c => c.CreatedAt, dataInicio.Value);
+            }
+
+            if (dataFim.HasValue)
+            {
+                // Adiciona +1 dia ao dataFim para incluir o dia inteiro (até 23:59:59)
+                filter &= filterBuilder.Lte(c => c.CreatedAt, dataFim.Value.Date.AddDays(1).AddTicks(-1));
+            }
+
+            return filter;
+        }
     }
 }

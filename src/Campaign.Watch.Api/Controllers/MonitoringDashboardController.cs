@@ -32,13 +32,20 @@ namespace Campaign.Watch.Api.Controllers
         /// Obtém os dados consolidados para o dashboard principal.
         /// </summary>
         /// <param name="clientName">Filtra os dados do dashboard para um cliente específico.</param>
+        /// <param name="dataInicio">Data de início para filtrar as campanhas (baseado no CreatedAt).</param>
+        /// <param name="dataFim">Data de fim para filtrar as campanhas (baseado no CreatedAt).</param>
         /// <returns>Um objeto contendo o resumo, agrupamentos e listas para o dashboard.</returns>
         [HttpGet]
         [ProducesResponseType(typeof(MonitoringDashboardResponse), 200)]
-        public async Task<IActionResult> ObterDadosDashboard([FromQuery] string clientName = null)
+        public async Task<IActionResult> ObterDadosDashboard(
+            [FromQuery] string clientName = null,
+            [FromQuery] DateTime? dataInicio = null,
+            [FromQuery] DateTime? dataFim = null)
         {
             _logger.LogInformation("Recebida requisição GET /api/monitoring/dashboard");
-            var dashboardData = await _dashboardApp.ObterDadosDashboardAsync(clientName);
+
+            var dashboardData = await _dashboardApp.ObterDadosDashboardAsync(clientName, dataInicio, dataFim);
+
             return Ok(dashboardData);
         }
 

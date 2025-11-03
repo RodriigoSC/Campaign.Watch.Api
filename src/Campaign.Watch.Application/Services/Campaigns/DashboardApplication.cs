@@ -28,30 +28,41 @@ namespace Campaign.Watch.Application.Services.Campaign
             _logger = logger;
         }
 
-        public async Task<MonitoringDashboardResponse> ObterDadosDashboardAsync(string clientName = null)
+        public async Task<MonitoringDashboardResponse> ObterDadosDashboardAsync(string clientName = null, DateTime? dataInicio = null, DateTime? dataFim = null)
         {
             IEnumerable<CampaignEntity> campaigns;
 
-            if (!string.IsNullOrEmpty(clientName))
+            bool hasClient = !string.IsNullOrEmpty(clientName);
+            bool hasDate = dataInicio.HasValue && dataFim.HasValue;
+
+            if (hasClient && hasDate)
             {
+                _logger.LogInformation("Buscando dados do dashboard por cliente {ClientName} e período {DataInicio} a {DataFim}", clientName, dataInicio, dataFim);
+                campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteOuDataAsync(clientName, dataInicio.Value, dataFim.Value);
+            }
+            else if (hasClient)
+            {
+                _logger.LogInformation("Buscando dados do dashboard por cliente {ClientName}", clientName);
                 campaigns = await _campaignService.ObterTodasAsCampanhasPorClienteAsync(clientName);
+            }
+            else if (hasDate)
+            {
+                _logger.LogInformation("Buscando dados do dashboard por período {DataInicio} a {DataFim}", dataInicio, dataFim);
+                campaigns = await _campaignService.ObterTodasAsCampanhasPorDataAsync(dataInicio.Value, dataFim.Value);
             }
             else
             {
+                _logger.LogInformation("Buscando dados do dashboard sem filtros.");
                 campaigns = await _campaignService.ObterTodasAsCampanhasAsync();
             }
 
             var campaignsList = campaigns.ToList();
-            var today = DateTime.UtcNow.Date;
-
-            // Buscar todas as execuções de hoje
-            var allExecutionsToday = new List<ExecutionEntity>();
-            foreach (var campaign in campaignsList)
-            {
-                var executions = await _executionRepository.ObterExecucoesPorCampanhaAsync(campaign.Id);
-                allExecutionsToday.AddRange(executions.Where(e => e.StartDate?.Date == today));
-            }
-
+            
+            var startDateFilter = dataInicio?.Date ?? DateTime.UtcNow.Date;
+            var endDateFilter = dataFim?.Date.AddDays(1).AddTicks(-1) ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1); 
+            
+            var campaignIds = campaignsList.Select(c => c.Id).ToList();
+            var allExecutionsInPeriod = await _executionRepository.ObterExecucoesPorCampanhasEDataAsync(campaignIds, startDateFilter, endDateFilter);
             var dashboard = new MonitoringDashboardResponse
             {
                 GeneratedAt = DateTime.UtcNow,
@@ -61,8 +72,9 @@ namespace Campaign.Watch.Application.Services.Campaign
                     ActiveCampaigns = campaignsList.Count(c => c.IsActive),
                     CampaignsWithIssues = campaignsList.Count(c =>
                         c.HealthStatus?.HasIntegrationErrors == true),
-                    TotalExecutionsToday = allExecutionsToday.Count,
-                    SuccessfulExecutionsToday = allExecutionsToday.Count(e => !e.HasMonitoringErrors),
+                    TotalExecutionsToday = allExecutionsInPeriod.Count(),
+                    SuccessfulExecutionsToday = allExecutionsInPeriod.Count(e => !e.HasMonitoringErrors),
+
                     OverallHealthScore = CalcularScoreSaudeGeral(campaignsList)
                 },
                 CampaignsByStatus = GerarGruposPorStatus(campaignsList),

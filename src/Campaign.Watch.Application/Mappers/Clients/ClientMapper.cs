@@ -14,12 +14,6 @@ namespace Campaign.Watch.Application.Mappers.Client
 
             CreateMap<CampaignConfigDto, CampaignConfig>();
             CreateMap<CampaignConfig, CampaignConfigDto>();
-
-            CreateMap<EffectiveChannelsDto, EffectiveChannels>();
-            CreateMap<EffectiveChannels, EffectiveChannelsDto>();
-
-            CreateMap<ChannelDbConfigDto, ChannelDbConfig>();
-            CreateMap<ChannelDbConfig, ChannelDbConfigDto>();
         }
     }
 }

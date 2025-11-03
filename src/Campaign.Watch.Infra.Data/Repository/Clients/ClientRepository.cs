@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Campaign.Watch.Infra.Data.Repository
+namespace Campaign.Watch.Infra.Data.Repository.Clients
 {
     /// <summary>
     /// Repositório para gerenciar as operações de dados da entidade ClientEntity.
@@ -67,7 +67,6 @@ namespace Campaign.Watch.Infra.Data.Repository
                 .Set(c => c.Name, client.Name)
                 .Set(c => c.IsActive, client.IsActive)
                 .Set(c => c.CampaignConfig, client.CampaignConfig)
-                .Set(c => c.EffectiveChannels, client.EffectiveChannels)
                 .Set(c => c.ModifiedAt, DateTime.UtcNow);
 
             var result = await _collection.UpdateOneAsync(c => c.Id == id, updateDefinition);
