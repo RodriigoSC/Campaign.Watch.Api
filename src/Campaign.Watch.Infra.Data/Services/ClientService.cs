@@ -80,6 +80,8 @@ namespace Campaign.Watch.Infra.Data.Services
             if (!ObjectId.TryParse(id, out var objectId))
                 return false;
 
+            client.UpdateModifiedAt();
+
             return await _clientRepository.UpdateAsync(objectId, client);
         }
 

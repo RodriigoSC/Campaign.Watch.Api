@@ -1,7 +1,6 @@
 ﻿using Campaign.Watch.Domain.Entities.Common;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
-using System.Collections.Generic;
 
 namespace Campaign.Watch.Domain.Entities.Client
 {
@@ -15,11 +14,24 @@ namespace Campaign.Watch.Domain.Entities.Client
         public CampaignConfig CampaignConfig { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ModifiedAt { get; set; }
-    }
+
+        public ClientEntity()
+        {
+            CreatedAt = DateTime.UtcNow;
+            ModifiedAt = DateTime.UtcNow;
+        }
+
+        public void UpdateModifiedAt()
+        {
+            ModifiedAt = DateTime.UtcNow;
+        }
+    }    
     
     public class CampaignConfig
     {
         public string ProjectID { get; set; }
         public string Database { get; set; }
     }
+
+
 }
