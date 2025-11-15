@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Campaign.Watch.Application.Dtos.Users;
 using Campaign.Watch.Application.Interfaces.Users;
+using Campaign.Watch.Domain.Entities.Users;
 using Campaign.Watch.Domain.Interfaces.Services.Users;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -24,12 +25,11 @@ namespace Campaign.Watch.Application.Services.Users
 
             if (authResult == null)
             {
-                return null; // Falha na autenticação
+                return null;
             }
 
             var (user, token) = authResult.Value;
 
-            // Mapeia a entidade para o DTO de resposta
             var userInfo = _mapper.Map<UserInfo>(user);
 
             return new LoginResponse
@@ -53,6 +53,7 @@ namespace Campaign.Watch.Application.Services.Users
         {
             return await _userService.UpdateProfileAsync(userId, request.Name, request.Email, request.Phone);
         }
+
         public async Task<IEnumerable<UserSummaryResponse>> GetAllUsersAsync()
         {
             var users = await _userService.GetAllUsersAsync();

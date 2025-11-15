@@ -80,7 +80,7 @@ namespace Campaign.Watch.Api.Controllers
             }
 
             return NoContent();
-        }
+        }        
 
         [HttpGet]
         [Authorize(Roles = "Admin")]

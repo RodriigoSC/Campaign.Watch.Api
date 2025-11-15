@@ -29,20 +29,29 @@ namespace Campaign.Watch.Infra.Data.Services
 
         public async Task<(UserEntity user, string token)?> AuthenticateAsync(string email, string password)
         {
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return null;
+
             var user = await _userRepository.GetByEmailAsync(email);
 
-            // 1. Valida usuário e senha
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+            if (user == null)
                 return null;
 
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (!user.IsActive)
+                throw new ArgumentException("Usuário desativado.");
+
+            if (string.IsNullOrEmpty(user.PasswordHash))
                 return null;
 
-            // 2. Gera o Token JWT
+            var passwordMatches = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+            if (!passwordMatches)
+                return null;
+
             var token = GenerateJwtToken(user);
 
             return (user, token);
         }
+
 
         public async Task<UserEntity> GetByIdAsync(string userId)
         {
@@ -58,7 +67,6 @@ namespace Campaign.Watch.Infra.Data.Services
             var user = await GetByIdAsync(userId);
             if (user == null) return false;
 
-            // Atualiza os campos
             user.Name = name;
             user.Email = email;
             user.Phone = phone;
@@ -66,15 +74,7 @@ namespace Campaign.Watch.Infra.Data.Services
             return await _userRepository.UpdateAsync(user);
         }
 
-        public async Task<bool> UpdateSettingsAsync(string userId, UserSettings settings)
-        {
-            var user = await GetByIdAsync(userId);
-            if (user == null) return false;
-
-            user.Settings = settings;
-
-            return await _userRepository.UpdateAsync(user);
-        }
+        
         public async Task<IEnumerable<UserEntity>> GetAllUsersAsync()
         {
             return await _userRepository.GetAllAsync();
@@ -93,8 +93,7 @@ namespace Campaign.Watch.Infra.Data.Services
                 Email = email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(plainTextPassword),
                 Role = role,
-                IsActive = true,
-                Settings = new UserSettings()
+                IsActive = true
             };
 
             return await _userRepository.CreateAsync(user);
@@ -162,6 +161,12 @@ namespace Campaign.Watch.Infra.Data.Services
             var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key não configurada.");
             var jwtIssuer = _configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer não configurado.");
             var jwtAudience = _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience não configurada.");
+            var tokenExpiresString = _configuration["Jwt:TokenExpires"] ?? throw new InvalidOperationException("Jwt:TokenExpires não configurado.");
+
+            if (!double.TryParse(tokenExpiresString, out double tokenExpiresHours))
+            {
+                throw new InvalidOperationException("Jwt:TokenExpires está em um formato inválido. Deve ser um número de horas (ex: 8).");
+            }
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -179,7 +184,7 @@ namespace Campaign.Watch.Infra.Data.Services
                 issuer: jwtIssuer,
                 audience: jwtAudience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(8),
+                expires: DateTime.UtcNow.AddHours(tokenExpiresHours),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
