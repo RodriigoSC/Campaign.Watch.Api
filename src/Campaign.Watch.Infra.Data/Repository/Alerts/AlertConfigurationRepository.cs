@@ -6,8 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Campaign.Watch.Infra.Data.Repository.Alerts
@@ -45,10 +44,10 @@ namespace Campaign.Watch.Infra.Data.Repository.Alerts
             return await _collection.Find(e => e.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<AlertConfigurationEntity>> GetByScopeAsync(ObjectId? clientId)
+        public async Task<IEnumerable<AlertConfigurationEntity>> GetByScopeAsync(ObjectId? clientId, CancellationToken cancellationToken)
         {
             var filter = Builders<AlertConfigurationEntity>.Filter.Eq(e => e.ClientId, clientId);
-            return await _collection.Find(filter).ToListAsync();
+            return await _collection.Find(filter).ToListAsync(cancellationToken);
         }
 
         public async Task<bool> UpdateAsync(ObjectId id, AlertConfigurationEntity entity)

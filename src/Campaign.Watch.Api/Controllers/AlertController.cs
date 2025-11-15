@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Campaign.Watch.Api.Controllers
@@ -31,7 +32,7 @@ namespace Campaign.Watch.Api.Controllers
         [HttpGet("AlertConfiguration")]
         [ProducesResponseType(typeof(IEnumerable<AlertConfigurationResponse>), 200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> GetAllAlerts([FromQuery] string clientId)
+        public async Task<IActionResult> GetAllAlerts([FromQuery] string clientId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(clientId))
             {
@@ -40,7 +41,7 @@ namespace Campaign.Watch.Api.Controllers
 
             try
             {
-                var alerts = await _alertApp.GetAllAlertsAsync(clientId);
+                var alerts = await _alertApp.GetAllAlertsAsync(clientId, cancellationToken);
                 return Ok(alerts);
             }
             catch (ArgumentException ex)
@@ -149,7 +150,7 @@ namespace Campaign.Watch.Api.Controllers
         [HttpGet("AlertHistory")]
         [ProducesResponseType(typeof(IEnumerable<AlertHistoryResponse>), 200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> GetAlertHistory([FromQuery] string clientId)
+        public async Task<IActionResult> GetAlertHistory([FromQuery] string clientId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(clientId))
             {
@@ -158,7 +159,7 @@ namespace Campaign.Watch.Api.Controllers
 
             try
             {
-                var history = await _alertApp.GetAlertHistoryAsync(clientId);
+                var history = await _alertApp.GetAlertHistoryAsync(clientId, cancellationToken);
                 return Ok(history);
             }
             catch (ArgumentException ex)

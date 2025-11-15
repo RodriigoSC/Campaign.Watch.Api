@@ -5,6 +5,7 @@ using Campaign.Watch.Infra.Data.Repository.Common;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Campaign.Watch.Infra.Data.Repository.Alerts
@@ -32,13 +33,13 @@ namespace Campaign.Watch.Infra.Data.Repository.Alerts
             return entity;
         }
 
-        public async Task<IEnumerable<AlertHistoryEntity>> GetByScopeAsync(ObjectId? clientId, int limit = 100)
+        public async Task<IEnumerable<AlertHistoryEntity>> GetByScopeAsync(ObjectId? clientId, CancellationToken cancellationToken, int limit = 100)
         {
             var filter = Builders<AlertHistoryEntity>.Filter.Eq(e => e.ClientId, clientId);
             return await _collection.Find(filter)
                 .SortByDescending(e => e.DetectedAt)
                 .Limit(limit)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
     }
 }

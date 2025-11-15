@@ -4,9 +4,9 @@ using Campaign.Watch.Domain.Entities.Client;
 
 namespace Campaign.Watch.Application.Mappers.Client
 {
-    public class ClientMapper : Profile
+    public class ClientProfile : Profile
     {
-        public ClientMapper()
+        public ClientProfile()
         {
             CreateMap<SaveClientRequest, ClientEntity>();
 

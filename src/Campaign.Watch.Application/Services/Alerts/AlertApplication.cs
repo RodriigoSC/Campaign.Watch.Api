@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Campaign.Watch.Application.Services.Alerts
@@ -58,17 +59,17 @@ namespace Campaign.Watch.Application.Services.Alerts
             return await _configRepository.DeleteAsync(objectId);
         }
 
-        public async Task<IEnumerable<AlertConfigurationResponse>> GetAllAlertsAsync(string clientId)
+        public async Task<IEnumerable<AlertConfigurationResponse>> GetAllAlertsAsync(string clientId, CancellationToken cancellationToken)
         {
             var scope = ParseScope(clientId);
-            var entities = await _configRepository.GetByScopeAsync(scope);
+            var entities = await _configRepository.GetByScopeAsync(scope, cancellationToken);
             return _mapper.Map<IEnumerable<AlertConfigurationResponse>>(entities);
         }
 
-        public async Task<IEnumerable<AlertHistoryResponse>> GetAlertHistoryAsync(string clientId)
+        public async Task<IEnumerable<AlertHistoryResponse>> GetAlertHistoryAsync(string clientId, CancellationToken cancellationToken)
         {
             var scope = ParseScope(clientId);
-            var entities = await _historyRepository.GetByScopeAsync(scope);
+            var entities = await _historyRepository.GetByScopeAsync(scope, cancellationToken);
             return _mapper.Map<IEnumerable<AlertHistoryResponse>>(entities);
         }
 
